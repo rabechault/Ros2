@@ -88,7 +88,7 @@ class Model(object):
 
         # TODO
         dx = self.l *math.sin(self.theta)
-        dy = self.l *(1-maths.cos(self.theta)
+        dy = 
 
         x_m = dx *math.cos(self.theta) - dy*math.sin(self.theta)
         y_m =
