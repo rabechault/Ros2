@@ -1,3 +1,5 @@
+from audioop import lin2adpcm
+from cmath import sin
 import sys
 import motor
 import math
@@ -13,22 +15,23 @@ class Model(object):
         # Distance between the wheels
         self.l = L
         # Wheel radius
+        #rayon roue
         self.r = R
 
-        self.x = 0
-        self.y = 0
-        self.theta = 0
+        self.x = 0.0
+        self.y = 0.0
+        self.theta = 0.0
 
-        self.x_goal = 0
-        self.y_goal = 0
-        self.theta_goal = 0
+        self.x_goal = 0.0
+        self.y_goal = 0.0
+        self.theta_goal = 0.0
 
         self.m1 = motor.Motor()
         self.m2 = motor.Motor()
 
-        self.acc = 0
-        self.speed_acc = 0
-        self.mode = 1
+        self.acc = 0.0
+        self.speed_acc = 0.0
+        self.mode = 1.0
 
     def __repr__(self):
         s = "current : {} {} {}".format(self.x, self.y, self.theta)
@@ -50,14 +53,15 @@ class Model(object):
         Returns:
             float -- Speed of motor1 (m/s), speech of motor2 (m/s)
         """
-        # TODO
-       
-        m1_speed = linear_speed + (L/2)* rotational_speed
-        m2_speed = linear_speed - (L/2)* rotational_speed
-
+        # if rotational_speed == 0:
+        #     m1_speed=linear_speed
+        #     m2_speed=linear_speed
+        # else:
+        m1_speed = linear_speed - rotational_speed * self.l/2
+        m2_speed = linear_speed + rotational_speed * self.l/2
         return m1_speed, m2_speed
 
-    def dk(self, m1_speed=None, m2_speed=None):
+    def dk(self, m1_speed, m2_speed):
         """Given the speed of each of the 2 motors (m/s), 
         returns the linear speed (m/s) and rotational speed (rad/s) of a differential wheeled robot
         
@@ -68,11 +72,9 @@ class Model(object):
         Returns:
             float -- linear speed (m/s), rotational speed (rad/s)
         """
-        # TODO
-        
+
         linear_speed = (m1_speed + m2_speed)/2
         rotation_speed = (m1_speed - m2_speed)/self.l
-
         return linear_speed, rotation_speed
 
     def update(self, dt):
@@ -81,19 +83,29 @@ class Model(object):
         The speed of the wheels are assumed constant during dt.
         
         Arguments:
-            dt {float} -- Travel time in seconds
+            dt {float} -- Travel time in secondsself
         """
         # Going from wheel speeds to robot speed
-        linear_speed, rotation_speed = self.dk()
-
-        # TODO
-        dx = self.l *math.sin(self.theta)
-        dy = 
-
-        x_m = dx *math.cos(self.theta) - dy*math.sin(self.theta)
-        y_m =
+        
+        linear_speed, rotation_speed = self.dk(self.m1.speed, self.m2.speed)
+        dp=linear_speed*dt #m.s et dt en s
+        alpha = rotation_speed *dt #rad.s et dt en s
+        
+        #print("linear speed '{}'".format(linear_speed))
+        #print("rotation speed '{}'".format(rotation_speed))
+        if rotation_speed==0:
+            dx=dp
+            dy=0
+        else :
+            dx= dp/alpha* math.sin(alpha)
+            dy= dp/alpha*(1-math.cos(alpha))
+        
+        x_m=dx*math.cos(self.theta) - dy*math.sin(self.theta)
+        y_m=dx*math.sin(self.theta) + dy*math.cos(self.theta)
         # Updating the robot position
-        self.x = self.x + x_m # TODO
-        self.y = self.y + y_m  # TODO
-        self.theta = self.theta + 0  # TODO
+        self.x = self.x + x_m  
+        self.y = self.y + y_m
+        self.theta = self.theta + alpha #
+        #print("x,y, theta : '{}'".format(self.x, self.y, self.theta))
+
 

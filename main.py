@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import random, math, pygame
 import pygame.draw
 from pygame.locals import *
@@ -13,7 +10,6 @@ from constants import *
 
 
 class SimpleRobotControl:
-    #coucou
     def __init__(self):
         self.control_modes = [XY_GOAL, WHEEL_CONTROL]
         self.control_mode_id = 0
@@ -24,7 +20,7 @@ class SimpleRobotControl:
         self.clock = pygame.time.Clock()
         self.t0 = pygame.time.get_ticks() / 1000.0
         self.is_artist = False
-        self.update_period = 1 / 60.0
+        self.update_period = 1.0 / 60.0
         # initialize and prepare screen
         pygame.init()
         self.screen = pygame.display.set_mode(WINSIZE)
@@ -57,6 +53,7 @@ class SimpleRobotControl:
 
         r = m.l / 2.0
         theta = m.theta - math.pi / 2
+        #print("m.theta= ", m.theta)
         wheel_pos = [
             int(
                 m.x * METERS_TO_PIXEL
@@ -130,8 +127,8 @@ class SimpleRobotControl:
                     if e.key == pygame.K_TAB:
                         self.set_next_mode()
                     if e.key == pygame.K_SPACE:
-                        self.m.m1.speed = 0
-                        self.m.m2.speed = 0
+                        self.m.m1.speed = 0.0
+                        self.m.m2.speed = 0.0
                     if e.key == pygame.K_UP:
                         self.m.m1.speed = (
                             self.m.m1.speed + WHEEL_SPEED_INC * speed_multiplier
@@ -151,8 +148,13 @@ class SimpleRobotControl:
                 elif e.type == pygame.MOUSEMOTION:
                     mx, my = e.pos
                 elif e.type == MOUSEBUTTONDOWN and e.button == 1:
-                    self.m.x_goal = (mx - WINCENTER[0]) / METERS_TO_PIXEL
-                    self.m.y_goal = -(my - WINCENTER[1]) / METERS_TO_PIXEL
+                    try:
+                        self.m.x_goal = (mx - WINCENTER[0]) / METERS_TO_PIXEL
+                        self.m.y_goal = -(my - WINCENTER[1]) / METERS_TO_PIXEL
+                    except:
+                        print("mx or my error")
+                        return 0
+
             if not (self.is_artist):
                 self.screen.fill(BLACK)
             if mode == XY_GOAL:
@@ -164,7 +166,7 @@ class SimpleRobotControl:
                 sys.exit()
             self.m.update(self.update_period)
 
-            # Creating a fake robot to trace the future :)
+            
             fake_m = copy.deepcopy(self.m)
             for i in range(30):
                 if mode == XY_GOAL:
@@ -173,29 +175,29 @@ class SimpleRobotControl:
                 self.draw_robot(m=fake_m, fake=True)
 
             self.draw_state()
-            # print(self.m)
+        
             t = pygame.time.get_ticks() / 1000.0 - self.t0
-            linear_speed, rotation_speed = self.m.dk()
+            linear_speed, rotation_speed = self.m.dk(self.m.m1.speed, self.m.m2.speed)
 
-            # Writing new text
+           
             self.screen.blit(
-                self.font.render("Simple Robot Simulator", 1, gold), [0, 0]
+                self.font.render("Simple Robot Simulator", True, gold), [0, 0]
             )
             if self.is_artist:
                 self.screen.blit(
-                    self.font.render("Artist mode!", 1, (0, 150, 0)), [20, 30]
+                    self.font.render("Artist mode!", True, (0, 150, 0)), [20, 30]
                 )
             else:
                 self.screen.blit(
                     self.small_font.render(
                         "q: quit, tab: next mode, mouse: goal position, arrows: wheel speed control, space: speed 0 to wheels, a: artist toggle",
-                        1,
+                        True,
                         (0, 150, 0),
                     ),
                     [20, 30],
                 )
                 self.screen.blit(
-                    self.small_font.render("Time: {0:.2f}".format(t), 1, (0, 150, 0)),
+                    self.small_font.render("Time: {0:.2f}".format(t), True, (0, 150, 0)),
                     [20, 60],
                 )
                 self.screen.blit(
@@ -203,7 +205,7 @@ class SimpleRobotControl:
                         "Mode: {}, artist: {}".format(
                             self.get_mode(), "True" if self.is_artist else "False"
                         ),
-                        1,
+                        True,
                         (0, 150, 0),
                     ),
                     [20, 90],
@@ -211,7 +213,7 @@ class SimpleRobotControl:
                 self.screen.blit(
                     self.small_font.render(
                         "Left wheel speed: {0:.2f} mm/s".format(1000 * self.m.m1.speed),
-                        1,
+                        True,
                         (0, 150, 0),
                     ),
                     [20, 120],
@@ -221,7 +223,7 @@ class SimpleRobotControl:
                         "Right wheel speed: {0:.2f} mm/s".format(
                             1000 * self.m.m2.speed
                         ),
-                        1,
+                        True,
                         (0, 150, 0),
                     ),
                     [20, 150],
@@ -229,7 +231,7 @@ class SimpleRobotControl:
                 self.screen.blit(
                     self.small_font.render(
                         "Linear speed: {0:.2f} mm/s".format(1000 * linear_speed),
-                        1,
+                        True,
                         (0, 150, 0),
                     ),
                     [20, 180],
@@ -237,7 +239,7 @@ class SimpleRobotControl:
                 self.screen.blit(
                     self.small_font.render(
                         "Angular speed: {0:.3f} rad/s".format(rotation_speed),
-                        1,
+                        True,
                         (0, 150, 0),
                     ),
                     [20, 210],
@@ -245,20 +247,25 @@ class SimpleRobotControl:
 
             pygame.display.update()
             # That juicy 60 Hz :D
-            self.clock.tick(1 / self.update_period)
+            self.clock.tick(int(1/self.update_period))
 
     def asserv(self, m=None):
         """Sets the speeds of the 2 motors to get the robot to its destination point
         """
         if m == None:
             m = self.m
+        #permet d'obtenir la distance entre (x,y) et (x_goal, y_goal)
         distance = math.sqrt(
             (m.x_goal - m.x) * (m.x_goal - m.x) + (m.y_goal - m.y) * (m.y_goal - m.y)
         )
-
+        #print("distance= ", distance)
         # TODO
-        local_speed = 0
-        local_turn = 0
+        #v=d/t ; w = delta theta / delta t
+        t=10
+        
+        local_speed=0
+        local_turn=0
+      
 
         m1_speed, m2_speed = m.ik(local_speed, local_turn)
         m.m1.speed = m1_speed
@@ -267,9 +274,18 @@ class SimpleRobotControl:
     def angle_diff(self, a, b):
         """Returns the smallest distance between 2 angles
         """
-        # TODO
-        d = 0
-        return d
+        print(a,b)
+        d = a-b
+        if -math.pi<d<math.pi :
+            return d
+        else : 
+            if d>math.pi:
+                while d>math.pi:
+                    d=d-2*math.pi
+            if d<-math.pi:
+                while d<-math.pi:
+                    d=d+2*math.pi
+            return d
 
 
 def main():
