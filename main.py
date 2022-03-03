@@ -13,6 +13,7 @@ from constants import *
 
 
 class SimpleRobotControl:
+    #coucou
     def __init__(self):
         self.control_modes = [XY_GOAL, WHEEL_CONTROL]
         self.control_mode_id = 0
