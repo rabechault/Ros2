@@ -51,8 +51,12 @@ class Model(object):
             float -- Speed of motor1 (m/s), speech of motor2 (m/s)
         """
         # TODO
-        m1_speed = 0
-        m2_speed = 0
+        if rotational_speed == 0 :
+            m1_speed = linear_speed
+            m2_speed = linear_speed 
+        else :
+            m1_speed = rotational_speed * ((linear_speed /rotational_speed) + L/2 )
+            m2_speed = rotational_speed * ((linear_speed /rotational_speed) - L/2 )
         return m1_speed, m2_speed
 
     def dk(self, m1_speed=None, m2_speed=None):
