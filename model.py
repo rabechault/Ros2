@@ -69,9 +69,10 @@ class Model(object):
             float -- linear speed (m/s), rotational speed (rad/s)
         """
         # TODO
-        linear_speed = m2_speed - (rotation_speed * (L/2))
-        rotation_speed = (linear_speed -m2_speed) / (L/2) 
         
+        linear_speed = (m1_speed + m2_speed)/2
+        rotation_speed = (m1_speed - m2_speed)/self.l
+
         return linear_speed, rotation_speed
 
     def update(self, dt):
@@ -86,9 +87,13 @@ class Model(object):
         linear_speed, rotation_speed = self.dk()
 
         # TODO
+        dx = self.l *math.sin(self.theta)
+        dy = self.l *(1-maths.cos(self.theta)
 
+        x_m = dx *math.cos(self.theta) - dy*math.sin(self.theta)
+        y_m =
         # Updating the robot position
-        self.x = self.x + 0  # TODO
-        self.y = self.y + 0  # TODO
+        self.x = self.x + x_m # TODO
+        self.y = self.y + y_m  # TODO
         self.theta = self.theta + 0  # TODO
 
